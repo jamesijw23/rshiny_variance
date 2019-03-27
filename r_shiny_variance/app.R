@@ -43,16 +43,26 @@ ui <- fluidPage(
                  numericInput("num_sd", 
                               label = h6("The Number of Standard Deviations:"),
                               value = 1.5,
-                              width ='75%'))
+                              width ='75%'))),
           
-        ), 
+        fluidRow(
+          column(5,
+                 numericInput("value", 
+                              label = h6("What is the value?"),
+                              value = 12,
+                              width ='75%')),
+          column(5,
+          selectInput("analysis", "What type of value is this?",
+                      c("Observation" = 1,
+                        "Mean" = 2)))
+          
+          
+        ),
+          
         
         
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30),
+        
+         
         
         actionButton("button","Calculate")
          
@@ -84,15 +94,30 @@ server <- function(input, output) {
     sd_1 = input$sd 
     n_1 = input$n
     num_sd_1 = input$num_sd
-    return(c(mu_1,sd_1,n_1,num_sd_1))
+    value_1 = input$value
+    analysis_1 = input$analysis
+    df_1 = data.frame(Var1 = rnorm(n_1, mu_1, sd_1),
+                    Var2 = rep('Trees',n_1))
+    
+    return(list(mu_1=mu_1,sd_1=sd_1,
+                n_1=n_1,num_sd_1=num_sd_1,
+                value_1 = value_1,analysis_1 = analysis_1,df_1 = df_1))
  
   })
   
   
   output$distPlot <- renderPlot({
     
-    df = data.frame(Var1 = rnorm(n_1, mu_1, sd_1),
-                    Var2 = rep('Trees',n_1))
+    inform<-inform()
+    mu_1 = inform$mu_1
+    sd_1 = inform$sd_1
+    n_1 = inform$n_1
+    num_sd_1 = inform$sd_1
+    value_1 = inform$value_1
+    analysis_1 = inform$analysis_1
+    df = inform$df_1
+    
+   
     
     
     ## Just the data
@@ -110,17 +135,17 @@ server <- function(input, output) {
     ## Data and new point: Is this value an outlier compared to the rest of the data?
     p_with_point = p_just_data +
       geom_point(size = 3,
-                 aes(x='Trees', y=new_value), 
+                 aes(x='Trees', y=value_1), 
                  colour="blue",show.legend = T)
     
     
     
-    if(analysis == T ){
-    max_value = mean(df$Var1) + num_sd*sd(df$Var1)
-    min_value = mean(df$Var1) - num_sd*sd(df$Var1)
+    if(analysis_1 == 1 ){
+    max_value = mean(df$Var1) + num_sd * sd(df$Var1)
+    min_value = mean(df$Var1) - num_sd * sd(df$Var1)
     } else{
-      max_value = mean(df$Var1) + num_sd* (sd(df$Var1)/sqrt(n_1))
-      min_value = mean(df$Var1) - num_sd*sd(df$Var1) 
+      max_value = mean(df$Var1) + num_sd * (sd(df$Var1)/sqrt(n_1))
+      min_value = mean(df$Var1) - num_sd * (sd(df$Var1)/sqrt(n_1))
     }
     
     ## With points and region of plausible values
@@ -138,16 +163,16 @@ server <- function(input, output) {
   output$text1 <- renderPrint({
     
     inform<-inform()
-    ## Load Important Information
-    ht_inform_p = inform$ht_info_p
-    ht_inform_x = inform$ht_info_x
-    ci_inform_p = inform$ci_info_p
-    ci_inform_x = inform$ci_info_x
+    mu_1 = inform$mu_1
+    sd_1 = inform$sd_1
+    n_1 = inform$n_1
+    num_sd_1 = inform$sd_1
+    value_1 = inform$value_1
+    analysis_1 = inform$analysis_1
+    df = inform$df_1
     
-    imp_info    = inform$imp_info
-    
-    
-    
+    cat("The mean is:", mean(df$Var1),'\n')
+    cat("The standard deviation is:", sd(df$Var1),'\n')
     
     
   })
